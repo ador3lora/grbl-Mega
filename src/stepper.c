@@ -30,10 +30,10 @@
 #define RAMP_DECEL 2
 #define RAMP_DECEL_OVERRIDE 3
 
-#define PREP_FLAG_RECALCULATE bit(0)
-#define PREP_FLAG_HOLD_PARTIAL_BLOCK bit(1)
-#define PREP_FLAG_PARKING bit(2)
-#define PREP_FLAG_DECEL_OVERRIDE bit(3)
+#define PREP_FLAG_RECALCULATE grbl_bit(0)
+#define PREP_FLAG_HOLD_PARTIAL_BLOCK grbl_bit(1)
+#define PREP_FLAG_PARKING grbl_bit(2)
+#define PREP_FLAG_DECEL_OVERRIDE grbl_bit(3)
 
 // Define Adaptive Multi-Axis Step-Smoothing(AMASS) levels and cutoff frequencies. The highest level
 // frequency bin starts at 0Hz and ends at its cutoff frequency. The next lower level frequency bin
@@ -176,7 +176,7 @@ typedef struct {
   float decelerate_after; // Deceleration ramp start measured from end of block (mm)
 
   float inv_rate;    // Used by PWM laser mode to speed up segment calculations.
-  uint16_t current_spindle_pwm; 
+  uint16_t current_spindle_pwm;
 } st_prep_t;
 static st_prep_t prep;
 
@@ -232,7 +232,7 @@ void st_wake_up()
   #ifdef DEFAULTS_RAMPS_BOARD
     int idx;
   #endif // Ramps Board
-  
+
   // Enable stepper drivers.
   #ifdef DEFAULTS_RAMPS_BOARD
     if (bit_istrue(settings.flags,BITFLAG_INVERT_ST_ENABLE)) {
@@ -260,7 +260,7 @@ void st_wake_up()
     // Set total step pulse time after direction pin set. Ad hoc computation from oscilloscope.
     st.step_pulse_time = -(((settings.pulse_microseconds+STEP_PULSE_DELAY-2)*TICKS_PER_MICROSECOND) >> 3);
     // Set delay between direction pin write and step command.
-    OCR0A = -(((settings.pulse_microseconds)*TICKS_PER_MICROSECOND) >> 3);
+    OCR2A = -(((settings.pulse_microseconds)*TICKS_PER_MICROSECOND) >> 3);
   #else // Normal operation
     // Set step pulse time. Ad hoc computation from oscilloscope. Uses two's complement.
     st.step_pulse_time = -(((settings.pulse_microseconds-2)*TICKS_PER_MICROSECOND) >> 3);
@@ -381,7 +381,7 @@ ISR(TIMER1_COMPA_vect)
       STEP_PORT(1) = (STEP_PORT(1) & ~(1 << STEP_BIT(1))) | st.step_outbits[1];
       STEP_PORT(2) = (STEP_PORT(2) & ~(1 << STEP_BIT(2))) | st.step_outbits[2];
     #endif
-  #else  
+  #else
     #ifdef STEP_PULSE_DELAY
       st.step_bits = (STEP_PORT & ~STEP_MASK) | st.step_outbits; // Store out_bits to prevent overwriting.
     #else  // Normal operation
@@ -391,8 +391,8 @@ ISR(TIMER1_COMPA_vect)
 
   // Enable step pulse reset timer so that The Stepper Port Reset Interrupt can reset the signal after
   // exactly settings.pulse_microseconds microseconds, independent of the main Timer1 prescaler.
-  TCNT0 = st.step_pulse_time; // Reload Timer0 counter
-  TCCR0B = (1<<CS01); // Begin Timer0. Full speed, 1/8 prescaler
+  TCNT2 = st.step_pulse_time; // Reload Timer0 counter
+  TCCR2B = (1<<CS21); // Begin Timer0. Full speed, 1/8 prescaler
 
   busy = true;
   sei(); // Re-enable interrupts to allow Stepper Port Reset Interrupt to fire on-time.
@@ -558,7 +558,7 @@ ISR(TIMER1_COMPA_vect)
 // This interrupt is enabled by ISR_TIMER1_COMPAREA when it sets the motor port bits to execute
 // a step. This ISR resets the motor port after a short period (settings.pulse_microseconds)
 // completing one step cycle.
-ISR(TIMER0_OVF_vect)
+ISR(TIMER2_OVF_vect)
 {
   // Reset stepping pins (leave the direction pins)
   #ifdef DEFAULTS_RAMPS_BOARD
@@ -568,7 +568,7 @@ ISR(TIMER0_OVF_vect)
   #else
     STEP_PORT = (STEP_PORT & ~STEP_MASK) | (step_port_invert_mask & STEP_MASK);
   #endif // Ramps Board
-  TCCR0B = 0; // Disable Timer0 to prevent re-entering this interrupt when it's not needed.
+  TCCR2B = 0; // Disable Timer0 to prevent re-entering this interrupt when it's not needed.
 }
 #ifdef STEP_PULSE_DELAY
   // This interrupt is used only when STEP_PULSE_DELAY is enabled. Here, the step pulse is
@@ -576,7 +576,7 @@ ISR(TIMER0_OVF_vect)
   // will then trigger after the appropriate settings.pulse_microseconds, as in normal operation.
   // The new timing between direction, step pulse, and step complete events are setup in the
   // st_wake_up() routine.
-  ISR(TIMER0_COMPA_vect)
+  ISR(TIMER2_COMPA_vect)
   {
     #ifdef DEFAULTS_RAMPS_BOARD
       STEP_PORT(0) = st.step_bits[0]; // Begin step pulse.
@@ -605,8 +605,8 @@ void st_generate_step_dir_invert_masks()
     step_port_invert_mask = 0;
     dir_port_invert_mask = 0;
     for (idx=0; idx<N_AXIS; idx++) {
-      if (bit_istrue(settings.step_invert_mask,bit(idx))) { step_port_invert_mask |= get_step_pin_mask(idx); }
-      if (bit_istrue(settings.dir_invert_mask,bit(idx))) { dir_port_invert_mask |= get_direction_pin_mask(idx); }
+      if (bit_istrue(settings.step_invert_mask,grbl_bit(idx))) { step_port_invert_mask |= get_step_pin_mask(idx); }
+      if (bit_istrue(settings.dir_invert_mask,grbl_bit(idx))) { dir_port_invert_mask |= get_direction_pin_mask(idx); }
     }
   #endif // Ramps Board
 }
@@ -637,13 +637,13 @@ void st_reset()
     for (idx=0; idx<N_AXIS; idx++) {
       st.dir_outbits[idx] = dir_port_invert_mask[idx]; // Initialize direction bits to default.
     }
-  
+
     STEP_PORT(0) = (STEP_PORT(0) & ~(1 << STEP_BIT(0))) | step_port_invert_mask[0];
     DIRECTION_PORT(0) = (DIRECTION_PORT(0) & ~(1 << DIRECTION_BIT(0))) | dir_port_invert_mask[0];
-  
+
     STEP_PORT(1) = (STEP_PORT(1) & ~(1 << STEP_BIT(1))) | step_port_invert_mask[1];
     DIRECTION_PORT(1) = (DIRECTION_PORT(1) & ~(1 << DIRECTION_BIT(1))) | dir_port_invert_mask[1];
-  
+
     STEP_PORT(2) = (STEP_PORT(2) & ~(1 << STEP_BIT(2))) | step_port_invert_mask[2];
     DIRECTION_PORT(2) = (DIRECTION_PORT(2) & ~(1 << DIRECTION_BIT(2))) | dir_port_invert_mask[2];
   #else
@@ -664,11 +664,11 @@ void stepper_init()
     STEP_DDR(0) |= 1<<STEP_BIT(0);
     STEP_DDR(1) |= 1<<STEP_BIT(1);
     STEP_DDR(2) |= 1<<STEP_BIT(2);
-  
+
     STEPPER_DISABLE_DDR(0) |= 1<<STEPPER_DISABLE_BIT(0);
     STEPPER_DISABLE_DDR(1) |= 1<<STEPPER_DISABLE_BIT(1);
     STEPPER_DISABLE_DDR(2) |= 1<<STEPPER_DISABLE_BIT(2);
-  
+
     DIRECTION_DDR(0) |= 1<<DIRECTION_BIT(0);
     DIRECTION_DDR(1) |= 1<<DIRECTION_BIT(1);
     DIRECTION_DDR(2) |= 1<<DIRECTION_BIT(2);
@@ -687,12 +687,12 @@ void stepper_init()
   // TIMSK1 &= ~(1<<OCIE1A);  // Set in st_go_idle().
 
   // Configure Timer 0: Stepper Port Reset Interrupt
-  TIMSK0 &= ~((1<<OCIE0B) | (1<<OCIE0A) | (1<<TOIE0)); // Disconnect OC0 outputs and OVF interrupt.
-  TCCR0A = 0; // Normal operation
-  TCCR0B = 0; // Disable Timer0 until needed
-  TIMSK0 |= (1<<TOIE0); // Enable Timer0 overflow interrupt
+  TIMSK2 &= ~((1<<OCIE2B) | (1<<OCIE2A) | (1<<TOIE2)); // Disconnect OC0 outputs and OVF interrupt.
+  TCCR2A = 0; // Normal operation
+  TCCR2B = 0; // Disable Timer0 until needed
+  TIMSK2 |= (1<<TOIE2); // Enable Timer0 overflow interrupt
   #ifdef STEP_PULSE_DELAY
-    TIMSK0 |= (1<<OCIE0A); // Enable Timer0 Compare Match A interrupt
+    TIMSK2 |= (1<<OCIE2A); // Enable Timer0 Compare Match A interrupt
   #endif
 }
 
@@ -836,15 +836,15 @@ void st_prep_buffer()
         } else {
           prep.current_speed = sqrt(pl_block->entry_speed_sqr);
         }
-        
+
         // Setup laser mode variables. PWM rate adjusted motions will always complete a motion with the
-        // spindle off. 
+        // spindle off.
         st_prep_block->is_pwm_rate_adjusted = false;
         if (settings.flags & BITFLAG_LASER_MODE) {
-          if (pl_block->condition & PL_COND_FLAG_SPINDLE_CCW) { 
+          if (pl_block->condition & PL_COND_FLAG_SPINDLE_CCW) {
             // Pre-compute inverse programmed rate to speed up PWM updating per step segment.
             prep.inv_rate = 1.0/pl_block->programmed_rate;
-            st_prep_block->is_pwm_rate_adjusted = true; 
+            st_prep_block->is_pwm_rate_adjusted = true;
           }
         }
       }
@@ -939,10 +939,10 @@ void st_prep_buffer()
 					prep.maximum_speed = prep.exit_speed;
 				}
 			}
-      
+
       bit_true(sys.step_control, STEP_CONTROL_UPDATE_SPINDLE_PWM); // Force update whenever updating block.
     }
-    
+
     // Initialize new segment
     segment_t *prep_segment = &segment_buffer[segment_buffer_head];
 
@@ -1051,16 +1051,16 @@ void st_prep_buffer()
     /* -----------------------------------------------------------------------------------
       Compute spindle speed PWM output for step segment
     */
-    
+
     if (st_prep_block->is_pwm_rate_adjusted || (sys.step_control & STEP_CONTROL_UPDATE_SPINDLE_PWM)) {
       if (pl_block->condition & (PL_COND_FLAG_SPINDLE_CW | PL_COND_FLAG_SPINDLE_CCW)) {
         float rpm = pl_block->spindle_speed;
-        // NOTE: Feed and rapid overrides are independent of PWM value and do not alter laser power/rate.        
+        // NOTE: Feed and rapid overrides are independent of PWM value and do not alter laser power/rate.
         if (st_prep_block->is_pwm_rate_adjusted) { rpm *= (prep.current_speed * prep.inv_rate); }
         // If current_speed is zero, then may need to be rpm_min*(100/MAX_SPINDLE_SPEED_OVERRIDE)
         // but this would be instantaneous only and during a motion. May not matter at all.
         prep.current_spindle_pwm = spindle_compute_pwm_value(rpm);
-      } else { 
+      } else {
         sys.spindle_speed = 0.0;
         prep.current_spindle_pwm = SPINDLE_PWM_OFF_VALUE;
       }
@@ -1068,7 +1068,7 @@ void st_prep_buffer()
     }
     prep_segment->spindle_pwm = prep.current_spindle_pwm; // Reload segment PWM value
 
-    
+
     /* -----------------------------------------------------------------------------------
        Compute segment step rate, steps to execute, and apply necessary rate corrections.
        NOTE: Steps are computed by direct scalar conversion of the millimeter distance

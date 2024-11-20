@@ -48,9 +48,9 @@
 
 // Define command actions for within execution-type modal groups (motion, stopping, non-modal). Used
 // internally by the parser to know which command to execute.
-// NOTE: Some macro values are assigned specific values to make g-code state reporting and parsing 
+// NOTE: Some macro values are assigned specific values to make g-code state reporting and parsing
 // compile a litte smaller. Necessary due to being completely out of flash on the 328p. Although not
-// ideal, just be careful with values that state 'do not alter' and check both report.c and gcode.c 
+// ideal, just be careful with values that state 'do not alter' and check both report.c and gcode.c
 // to see how they are used, if you need to alter them.
 
 // Modal Group G0: Non-modal actions
@@ -161,21 +161,21 @@
 #define GC_PROBE_FAIL_INIT  GC_UPDATE_POS_NONE
 #define GC_PROBE_FAIL_END   GC_UPDATE_POS_TARGET
 #ifdef SET_CHECK_MODE_PROBE_TO_START
-  #define GC_PROBE_CHECK_MODE   GC_UPDATE_POS_NONE  
+  #define GC_PROBE_CHECK_MODE   GC_UPDATE_POS_NONE
 #else
   #define GC_PROBE_CHECK_MODE   GC_UPDATE_POS_TARGET
 #endif
 
 // Define gcode parser flags for handling special cases.
 #define GC_PARSER_NONE                  0 // Must be zero.
-#define GC_PARSER_JOG_MOTION            bit(0)
-#define GC_PARSER_CHECK_MANTISSA        bit(1)
-#define GC_PARSER_ARC_IS_CLOCKWISE      bit(2)
-#define GC_PARSER_PROBE_IS_AWAY         bit(3)
-#define GC_PARSER_PROBE_IS_NO_ERROR     bit(4)
-#define GC_PARSER_LASER_FORCE_SYNC      bit(5)
-#define GC_PARSER_LASER_DISABLE         bit(6)
-#define GC_PARSER_LASER_ISMOTION        bit(7)
+#define GC_PARSER_JOG_MOTION            grbl_bit(0)
+#define GC_PARSER_CHECK_MANTISSA        grbl_bit(1)
+#define GC_PARSER_ARC_IS_CLOCKWISE      grbl_bit(2)
+#define GC_PARSER_PROBE_IS_AWAY         grbl_bit(3)
+#define GC_PARSER_PROBE_IS_NO_ERROR     grbl_bit(4)
+#define GC_PARSER_LASER_FORCE_SYNC      grbl_bit(5)
+#define GC_PARSER_LASER_DISABLE         grbl_bit(6)
+#define GC_PARSER_LASER_ISMOTION        grbl_bit(7)
 
 
 // NOTE: When this struct is zeroed, the above defines set the defaults for the system.

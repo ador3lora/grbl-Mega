@@ -36,7 +36,7 @@ volatile uint8_t sys_rt_exec_accessory_override; // Global realtime executor bit
 #endif
 
 
-int main(void)
+int grbl_loop(void)
 {
   // Initialize system upon power-up.
   serial_init();   // Setup serial baud rate and interrupts
@@ -54,7 +54,7 @@ int main(void)
   #else
     sys.state = STATE_IDLE;
   #endif
-  
+
   // Check for power-up and set system alarm if homing is enabled to force homing cycle
   // by setting Grbl's alarm state. Alarm locks out all g-code commands, including the
   // startup scripts, but allows access to settings and internal commands. Only a homing

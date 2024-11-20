@@ -102,4 +102,14 @@
 
 // ---------------------------------------------------------------------------------------
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int grbl_loop(void);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

@@ -26,7 +26,7 @@ static float pwm_gradient; // Precalulated value to speed up rpm to PWM conversi
 
 
 void spindle_init()
-{    
+{
   // Configure variable spindle PWM and enable pin, if required.
   SPINDLE_PWM_DDR |= (1<<SPINDLE_PWM_BIT); // Configure as PWM output pin.
   SPINDLE_TCCRA_REGISTER = SPINDLE_TCCRA_INIT_MASK; // Configure PWM output compare timer
@@ -117,17 +117,17 @@ void spindle_set_speed(uint16_t pwm_value)
       #if (N_PIECES > 3)
         if (rpm > RPM_POINT34) {
           pwm_value = floor(RPM_LINE_A4*rpm - RPM_LINE_B4);
-        } else 
+        } else
       #endif
       #if (N_PIECES > 2)
         if (rpm > RPM_POINT23) {
           pwm_value = floor(RPM_LINE_A3*rpm - RPM_LINE_B3);
-        } else 
+        } else
       #endif
       #if (N_PIECES > 1)
         if (rpm > RPM_POINT12) {
           pwm_value = floor(RPM_LINE_A2*rpm - RPM_LINE_B2);
-        } else 
+        } else
       #endif
       {
         pwm_value = floor(RPM_LINE_A1*rpm - RPM_LINE_B1);
@@ -137,7 +137,7 @@ void spindle_set_speed(uint16_t pwm_value)
     return(pwm_value);
   }
 
-#else 
+#else
 
   // Called by spindle_set_state() and step segment generator. Keep routine small and efficient.
   uint16_t spindle_compute_pwm_value(float rpm) // Mega2560 PWM register is 16-bit.
@@ -157,7 +157,7 @@ void spindle_set_speed(uint16_t pwm_value)
 		sys.spindle_speed = settings.rpm_min;
 		pwm_value = SPINDLE_PWM_MIN_VALUE;
 	  }
-	} else { 
+	} else {
 	  // Compute intermediate PWM value with linear spindle speed model.
 	  // NOTE: A nonlinear model could be installed here, if required, but keep it VERY light-weight.
 	  sys.spindle_speed = rpm;
@@ -166,7 +166,7 @@ void spindle_set_speed(uint16_t pwm_value)
 	return(pwm_value);
   }
 
-#endif  
+#endif
 
 // Immediately sets spindle running state with direction and spindle rpm via PWM, if enabled.
 // Called by g-code parser spindle_sync(), parking retract and restore, g-code program end,
@@ -175,12 +175,12 @@ void spindle_set_state(uint8_t state, float rpm)
 {
   if (sys.abort) { return; } // Block during abort.
   if (state == SPINDLE_DISABLE) { // Halt or set spindle direction and rpm.
-  
+
     sys.spindle_speed = 0.0;
     spindle_stop();
-  
+
   } else {
-  
+
     if (state == SPINDLE_ENABLE_CW) {
       SPINDLE_DIRECTION_PORT &= ~(1<<SPINDLE_DIRECTION_BIT);
     } else {
@@ -188,7 +188,7 @@ void spindle_set_state(uint8_t state, float rpm)
     }
 
     // NOTE: Assumes all calls to this function is when Grbl is not moving or must remain off.
-    if (settings.flags & BITFLAG_LASER_MODE) { 
+    if (settings.flags & BITFLAG_LASER_MODE) {
       if (state == SPINDLE_ENABLE_CCW) { rpm = 0.0; } // TODO: May need to be rpm_min*(100/MAX_SPINDLE_SPEED_OVERRIDE);
     }
     spindle_set_speed(spindle_compute_pwm_value(rpm));
@@ -198,16 +198,16 @@ void spindle_set_state(uint8_t state, float rpm)
         SPINDLE_ENABLE_PORT &= ~(1<<SPINDLE_ENABLE_BIT);
       #else
         SPINDLE_ENABLE_PORT |= (1<<SPINDLE_ENABLE_BIT);
-      #endif   
+      #endif
     #endif
-  
+
   }
-  
+
   sys.report_ovr_counter = 0; // Set to report change immediately
 }
 
 
-// G-code parser entry-point for setting spindle state. Forces a planner buffer sync and bails 
+// G-code parser entry-point for setting spindle state. Forces a planner buffer sync and bails
 // if an abort or check-mode is active.
 void spindle_sync(uint8_t state, float rpm)
 {

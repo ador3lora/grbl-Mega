@@ -1,8 +1,8 @@
 /*
   sleep.c - determines and executes sleep procedures
   Part of Grbl
-  
-  Copyright (c) 2016 Sungeun K. Jeon  
+
+  Copyright (c) 2016 Sungeun K. Jeon
 
   Grbl is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
   along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "grbl.h" 
+#include "grbl.h"
 
 
 #define SLEEP_SEC_PER_OVERFLOW (65535.0*64.0/F_CPU) // With 16-bit timer size and prescaler
@@ -28,11 +28,11 @@ volatile uint8_t sleep_counter;
 
 
 // Initialize sleep counters and enable timer.
-static void sleep_enable() { 
+static void sleep_enable() {
   sleep_counter = 0; // Reset sleep counter
   TCNT3 = 0;  // Reset timer3 counter register
   TIMSK3 |= (1<<TOIE3); // Enable timer3 overflow interrupt
-} 
+}
 
 
 // Disable sleep timer.
@@ -68,18 +68,18 @@ static void sleep_execute()
   // Enable sleep counter
   sleep_enable();
 
-  do {          
+  do {
     // Monitor for any new RX serial data or external events (queries, buttons, alarms) to exit.
     if ( (serial_get_rx_buffer_count() > rx_initial) || sys_rt_exec_state || sys_rt_exec_alarm ) {
       // Disable sleep timer and return to normal operation.
-      sleep_disable();  
+      sleep_disable();
       return;
     }
   } while(sleep_counter <= SLEEP_COUNT_MAX);
-  
+
   // If reached, sleep counter has expired. Execute sleep procedures.
-  // Notify user that Grbl has timed out and will be parking. 
-  // To exit sleep, resume or reset. Either way, the job will not be recoverable. 
+  // Notify user that Grbl has timed out and will be parking.
+  // To exit sleep, resume or reset. Either way, the job will not be recoverable.
   report_feedback_message(MESSAGE_SLEEP_MODE);
   system_set_exec_state_flag(EXEC_SLEEP);
 }
@@ -93,10 +93,10 @@ void sleep_check()
 {
   // The sleep execution feature will continue only if the machine is in an IDLE or HOLD state and
   // has any powered components enabled.
-  // NOTE: With overrides or in laser mode, modal spindle and coolant state are not guaranteed. Need 
+  // NOTE: With overrides or in laser mode, modal spindle and coolant state are not guaranteed. Need
   // to directly monitor and record running state during parking to ensure proper function.
   if (gc_state.modal.spindle || gc_state.modal.coolant) {
-    if (sys.state == STATE_IDLE) { 
+    if (sys.state == STATE_IDLE) {
       sleep_execute();
     } else if ((sys.state & STATE_HOLD) && (sys.suspend & SUSPEND_HOLD_COMPLETE)) {
       sleep_execute();
@@ -104,4 +104,4 @@ void sleep_check()
       sleep_execute();
     }
   }
-}  
+}

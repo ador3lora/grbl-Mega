@@ -33,14 +33,14 @@
 #define PLAN_EMPTY_BLOCK false
 
 // Define planner data condition flags. Used to denote running conditions of a block.
-#define PL_COND_FLAG_RAPID_MOTION      bit(0)
-#define PL_COND_FLAG_SYSTEM_MOTION     bit(1) // Single motion. Circumvents planner state. Used by home/park.
-#define PL_COND_FLAG_NO_FEED_OVERRIDE  bit(2) // Motion does not honor feed override.
-#define PL_COND_FLAG_INVERSE_TIME      bit(3) // Interprets feed rate value as inverse time when set.
-#define PL_COND_FLAG_SPINDLE_CW        bit(4)
-#define PL_COND_FLAG_SPINDLE_CCW       bit(5)
-#define PL_COND_FLAG_COOLANT_FLOOD     bit(6)
-#define PL_COND_FLAG_COOLANT_MIST      bit(7)
+#define PL_COND_FLAG_RAPID_MOTION      grbl_bit(0)
+#define PL_COND_FLAG_SYSTEM_MOTION     grbl_bit(1) // Single motion. Circumvents planner state. Used by home/park.
+#define PL_COND_FLAG_NO_FEED_OVERRIDE  grbl_bit(2) // Motion does not honor feed override.
+#define PL_COND_FLAG_INVERSE_TIME      grbl_bit(3) // Interprets feed rate value as inverse time when set.
+#define PL_COND_FLAG_SPINDLE_CW        grbl_bit(4)
+#define PL_COND_FLAG_SPINDLE_CCW       grbl_bit(5)
+#define PL_COND_FLAG_COOLANT_FLOOD     grbl_bit(6)
+#define PL_COND_FLAG_COOLANT_MIST      grbl_bit(7)
 #define PL_COND_MOTION_MASK    (PL_COND_FLAG_RAPID_MOTION|PL_COND_FLAG_SYSTEM_MOTION|PL_COND_FLAG_NO_FEED_OVERRIDE)
 #define PL_COND_SPINDLE_MASK   (PL_COND_FLAG_SPINDLE_CW|PL_COND_FLAG_SPINDLE_CCW)
 #define PL_COND_ACCESSORY_MASK (PL_COND_FLAG_SPINDLE_CW|PL_COND_FLAG_SPINDLE_CCW|PL_COND_FLAG_COOLANT_FLOOD|PL_COND_FLAG_COOLANT_MIST)

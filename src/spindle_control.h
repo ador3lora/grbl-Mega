@@ -26,8 +26,8 @@
 #define SPINDLE_FORCE_SYNC true
 
 #define SPINDLE_STATE_DISABLE  0  // Must be zero.
-#define SPINDLE_STATE_CW       bit(0)
-#define SPINDLE_STATE_CCW      bit(1)
+#define SPINDLE_STATE_CW       grbl_bit(0)
+#define SPINDLE_STATE_CCW      grbl_bit(1)
 
 
 // Initializes spindle pins and hardware PWM, if enabled.
@@ -44,7 +44,7 @@ uint8_t spindle_get_state();
 void spindle_sync(uint8_t state, float rpm);
 
 // Sets spindle running state with direction, enable, and spindle PWM.
-void spindle_set_state(uint8_t state, float rpm); 
+void spindle_set_state(uint8_t state, float rpm);
 
 // Sets spindle PWM quickly for stepper ISR. Also called by spindle_set_state().
 // NOTE: Mega2560 PWM register is 16-bit.
@@ -52,7 +52,7 @@ void spindle_set_speed(uint16_t pwm_value);
 
 // Computes Mega2560-specific PWM register value for the given RPM for quick updating.
 uint16_t spindle_compute_pwm_value(float rpm);
-  
+
 // Stop and start spindle routines. Called by all spindle routines and stepper ISR.
 void spindle_stop();
 
